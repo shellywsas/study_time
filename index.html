@@ -6,6 +6,7 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📚</text></svg>">
     <title>📚 מערכת הלמידה החכמה ✨</title>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script src="https://www.youtube.com/iframe_api"></script>
     <style>
         @keyframes gradientBG {
             0% {background-position: 0% 50%;}
@@ -41,6 +42,7 @@
             padding: 30px;
             border-radius: 30px;
             box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+            position: relative;
         }
 
         /* מסך ההגדרות */
@@ -110,6 +112,25 @@
             transition: transform 0.2s;
         }
         .btn-primary:hover { transform: scale(1.05); }
+
+        .btn-history {
+            position: absolute;
+            top: -20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.7);
+            border: 2px solid #d500f9;
+            color: #4a148c;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .btn-history:hover {
+            background: #d500f9;
+            color: white;
+        }
 
         /* מסך האפליקציה המרכזי */
         #mainApp {
@@ -183,6 +204,9 @@
         .modal-content { background: white; padding: 30px; border-radius: 25px; width: 90%; max-width: 550px; text-align: center; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 40px rgba(0,0,0,0.2); animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);}
         @keyframes popIn { 0% {transform: scale(0.8); opacity: 0;} 100% {transform: scale(1); opacity: 1;} }
         .survey-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 10px;}
+        
+        .history-list { text-align: right; max-height: 300px; overflow-y: auto; margin-top: 20px; }
+        .history-item { background: #f3f4f6; padding: 15px; border-radius: 10px; margin-bottom: 10px; border-right: 4px solid #4facfe; }
 
         /* מסך סיכום */
         #summaryScreen { display: none; max-width: 800px; width: 100%; text-align: center; background: rgba(255, 255, 255, 0.85); padding: 50px; border-radius: 30px;}
@@ -191,11 +215,27 @@
         .summary-box { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); flex: 1; min-width: 150px;}
         .time-badge { display: inline-block; background: #e0c3fc; padding: 5px 15px; border-radius: 15px; font-weight: bold; color: #4a148c; margin: 0 10px;}
         .advice-box { background: rgba(74, 20, 140, 0.1); border-left: 5px solid #d500f9; padding: 20px; border-radius: 0 15px 15px 0; text-align: right; margin-bottom: 30px; font-size: 1.2em;}
+        
+        /* הסתרת נגן יוטיוב אך השארתו פעיל פיזית למניעת חסימות אודיו */
+        #yt-container {
+            position: absolute;
+            left: -9999px;
+            top: -9999px;
+            width: 10px;
+            height: 10px;
+            opacity: 0;
+            pointer-events: none;
+        }
     </style>
 </head>
 <body>
 
+    <div id="yt-container">
+        <div id="ytplayer"></div>
+    </div>
+
     <div class="glass-card" id="setupScreen">
+        <button class="btn-history" onclick="showHistoryModal()">📚 היסטוריית למידה</button>
         <h1 style="color: #4a148c;"><span class="top-icon">📚🚀</span> מוכנים לחרוש? </h1>
         <p>בואו נגדיר את סביבת הלמידה המושלמת עבורכם.</p>
 
@@ -243,7 +283,7 @@
                         </select>
                     </div>
                     <div class="input-block unit-block"><label>כמה יח"ל?</label><select class="u-units"><option value="3">3 יח"ל</option><option value="4">4 יח"ל</option><option value="5" selected>5 יח"ל</option></select></div>
-                    <div class="input-block"><label>מה נותן לך מוטיבציה?</label><input type="text" class="u-motive" value="פיצפץ ודפנה"></div>
+                    <div class="input-block"><label>מה נותן לך מוטיבציה?</label><input type="text" class="u-motive" value="להצליח בגדול"></div>
                 </div>
             </div>
             <button onclick="addUserRow()" style="background:none; border:1px solid #4a148c; border-radius:10px; padding:5px 10px; cursor:pointer; font-weight: bold; color:#4a148c;">+ הוסף חבר/ה ללמידה</button>
@@ -280,14 +320,14 @@
         
         <div class="glass-card panel music-panel">
             <h2>תפריט מוזיקה ואווירה 🎧</h2>
-            <button class="music-btn" onclick="playMusic('https://upload.wikimedia.org/wikipedia/commons/4/4b/Rain_on_the_roof.ogg', this)"><span>🌧️</span> גשם חזק על חלון</button>
-            <button class="music-btn" onclick="playMusic('https://upload.wikimedia.org/wikipedia/commons/4/47/Coffee_shop_ambience.ogg', this)"><span>☕</span> רעש לבן - בית קפה</button>
-            <button class="music-btn" onclick="playMusic('https://upload.wikimedia.org/wikipedia/commons/c/c2/Forest_ambience.ogg', this)"><span>🍃</span> טבע וציוץ ציפורים</button>
-            <button class="music-btn" onclick="playMusic('https://upload.wikimedia.org/wikipedia/commons/1/1a/Waves_on_a_rocky_beach.ogg', this)"><span>🌊</span> גלי ים מרגיעים</button>
-            <button class="music-btn" onclick="playMusic('https://upload.wikimedia.org/wikipedia/commons/b/b8/Campfire_sound.ogg', this)"><span>🔥</span> פצפוצי מדורה בלילה</button>
+            <button class="music-btn" onclick="playYTMusic('jfKfPfyJRdk', this)"><span>📚</span> Lofi Girl - למידה ורוגע</button>
+            <button class="music-btn" onclick="playYTMusic('mPZkdNFkNps', this)"><span>🌧️</span> גשם חזק על חלון (ללא מוזיקה)</button>
+            <button class="music-btn" onclick="playYTMusic('h2zkV-l_TbY', this)"><span>☕</span> אווירת בית קפה ג'אז</button>
+            <button class="music-btn" onclick="playYTMusic('Nep1qytq9JM', this)"><span>🌊</span> גלי ים ופסנתר מרגיע</button>
+            <button class="music-btn" onclick="playYTMusic('5qap5aO4i9A', this)"><span>🔥</span> Lo-Fi פיצפוצי מדורה</button>
             
             <hr style="border-top:1px solid rgba(0,0,0,0.1); margin: 15px 0;">
-            <button class="music-btn" onclick="playMusic('stop', this)" style="background: rgba(255,255,255,0.4); justify-content: center;">⏹️ כבה מוזיקה רקע</button>
+            <button class="music-btn" onclick="playYTMusic('stop', this)" style="background: rgba(255,255,255,0.4); justify-content: center;">⏹️ כבה מוזיקה רקע</button>
             <button id="muteBtn" class="music-btn mute-toggle" onclick="toggleGlobalMute()">🔊 השתק הכל (כולל דיבור)</button>
         </div>
 
@@ -331,7 +371,7 @@
             
             <hr style="border-top:1px solid rgba(0,0,0,0.1); margin: 15px 0;">
             <button class="side-btn" onclick="editSettings()">⚙️ עריכת הגדרות למידה</button>
-            <button class="side-btn btn-danger" onclick="resetAllStats()">🗑️ איפוס מלא של הנתונים</button>
+            <button class="side-btn btn-danger" onclick="resetAllStats()">🗑️ איפוס סשן נוכחי</button>
             <button class="side-btn btn-success" onclick="finishStudying()">🎓 סיימתי ללמוד להיום! 🎉</button>
         </div>
     </div>
@@ -361,6 +401,16 @@
         </div>
     </div>
 
+    <div class="modal-overlay" id="historyModal">
+        <div class="modal-content">
+            <h2 style="color:#4a148c; margin-top:0;">📚 היסטוריית למידות קודמות</h2>
+            <div id="pastSessionsList" class="history-list">
+                </div>
+            <button class="btn-primary" onclick="closeHistoryModal()" style="font-size: 1.1em; padding: 10px 25px; margin-top: 20px; width: 100%;">סגור וחזור ללמוד</button>
+            <button class="side-btn btn-danger" onclick="clearAllHistory()" style="margin-top: 10px;">🗑️ מחק את כל ההיסטוריה</button>
+        </div>
+    </div>
+
     <div id="summaryScreen">
         <h1><span class="top-icon">🎉🎓</span> כל הכבוד! סיימתם!</h1>
         <p style="font-size: 1.4em; color: #444;">הנה הסיכום של העבודה שעשיתם היום ב<span id="sumSubject" style="font-weight:bold;"></span> <span id="sumExamType"></span>:</p>
@@ -386,12 +436,26 @@
         </div>
 
         <div class="advice-box" id="sumAdvice"></div>
-        <button class="btn-primary" onclick="window.location.reload()">התחלו סשן חדש לגמרי ↺</button>
+        <button class="btn-primary" onclick="window.location.reload()">התחילו סשן חדש לגמרי ↺</button>
     </div>
 
     <script>
         let isEditingMode = false;
-        let activeAudio = null; // משתנה גלובלי לניהול המוזיקה ב-JS כמו ב-BeatStory
+        let ytPlayer = null; 
+        let ytReady = false;
+
+        // פונקציית טעינה של YouTube API - נותנת מידות כדי למנוע חסימת דפדפנים
+        function onYouTubeIframeAPIReady() {
+            ytPlayer = new YT.Player('ytplayer', {
+                height: '200',
+                width: '200',
+                videoId: '',
+                playerVars: { 'autoplay': 0, 'loop': 1, 'controls': 0 },
+                events: {
+                    'onReady': () => { ytReady = true; }
+                }
+            });
+        }
 
         let appData = {
             users: [], exam: { type: 'מבחן', subject: 'מתמטיקה', date: null, daysLeft: 0 },
@@ -412,7 +476,10 @@
                 voice: [
                     "חבר'ה, כוחות ווקטורים זה קטן עליכם. לנשום עמוק ולפרק את התרגיל.", 
                     "אם הפיזיקה קשה עכשיו, תזכרו שהמאמץ בונה לכם את השריר במוח.",
-                    "{F:את אלופה|M:אתה אלוף}, אל תוותרו גם אם המשוואה מסתבכת."
+                    "{F:את אלופה|M:אתה אלוף}, אל תוותרו גם אם המשוואה מסתבכת.",
+                    "המוח שלך עובד עכשיו כמו מנוע על! תמשיכי ככה.",
+                    "אנרגיה קינטית, אנרגיה פוטנציאלית, העיקר שהאנרגיה שלך בשמיים.",
+                    "זה רק עוד חוק של ניוטון, אפשר לפתור הכל עם קצת סבלנות."
                 ]
             },
             "מתמטיקה": {
@@ -426,7 +493,10 @@
                 voice: [
                     "אם נתקעתם במשוואה, קחו רגע, תסתכלו על הנתונים שוב. הכל מסתדר בסוף.", 
                     "זה רק עוד תרגיל במתמטיקה בדרך להצלחה מטורפת. {F:את תותחית|M:אתה תותח}!",
-                    "תזכרו, כל טעות בחישוב היא רק דרך ללמוד לתרגיל הבא."
+                    "תזכרו, כל טעות בחישוב היא רק דרך ללמוד לתרגיל הבא.",
+                    "לנשום עמוק. מתמטיקה זה פאזל, ואת מרכיבה אותו מצוין.",
+                    "כל תרגיל מקרב אותך לציון המושלם. המשיכי בכל הכוח!",
+                    "אל תתני למספרים לבלבל אותך, יש לך את הידע והיכולת."
                 ]
             },
             "מחשבים": {
@@ -436,8 +506,10 @@
                     "עוד לולאה אחת, עוד משפט תנאי, והפרויקט מושלם! 🚀"
                 ],
                 voice: [
-                    "אם יש שגיאה, אל תילחצו. תקראו את השגיאה, התשובה בדרך כלל שם.",
-                    "קוד יפה דורש ריכוז. {F:את עושה|M:אתה עושה} עבודה מעולה."
+                    "אם יש שגיאה, אל תילחצו. תקראו אותה בזהירות, התשובה שם.",
+                    "קוד יפה דורש ריכוז. {F:את עושה|M:אתה עושה} עבודה מעולה.",
+                    "דיבאגינג זה חלק מהחיים של מתכנתים, אל תתייאשו מהבאג הזה.",
+                    "כשהקוד יעבוד בסוף, ההרגשה תהיה מדהימה. תמשיכו!"
                 ]
             },
             "אנגלית": {
@@ -449,7 +521,9 @@
                 ],
                 voice: [
                     "אנגלית זה עניין של תרגול וביטחון. אל תפחדו לטעות, ככה לומדים הכי טוב.", 
-                    "You are amazing, just keep going! {F:אלופה|M:אלוף}!"
+                    "You are amazing, just keep going! {F:אלופה|M:אלוף}!",
+                    "תקראו את המשפט שוב, אולי המילה החסרה מסתתרת בהקשר.",
+                    "אוצר המילים שלכם גדל מרגע לרגע. כל הכבוד!"
                 ]
             },
             "לשון": {
@@ -459,8 +533,10 @@
                     "תזכרו - הפועל הוא רק חבר, והתחביר הוא משחק חשיבה."
                 ],
                 voice: [
-                    "אם נתקעתם בזיהוי גזרות, פשוט תגידו את המילה בקול רם. זה תמיד עוזר.", 
-                    "לשון דורש דיוק, ואתם הכי מדויקים שיש."
+                    "אם נתקעתם בזיהוי גזרות, פשוט תגידו את המילה בקול רם. זה עוזר.", 
+                    "לשון דורש דיוק, ואתם הכי מדויקים שיש.",
+                    "תחביר ושחבור זה כמו פאזל. חפשו את הנשוא קודם, ואז הכל יסתדר.",
+                    "שמרו על קור רוח עם הבניינים. אתם שולטים בחומר."
                 ]
             },
             "היסטוריה": {
@@ -470,8 +546,10 @@
                     "עוד פרק, עוד אירוע עולמי ש{F:את שולטת|M:אתה שולט} בו!"
                 ],
                 voice: [
-                    "היסטוריה זה פשוט סיפור מרתק. תנסו לדמיין שאתם שם, זה יעזור לזכור הכל.", 
-                    "יש הרבה לקרוא, אבל {F:את מתמודדת|M:אתה מתמודד} עם זה מצוין."
+                    "היסטוריה זה פשוט סיפור מרתק. תנסו לדמיין שאתם שם, זה יעזור לזכור.", 
+                    "יש הרבה לקרוא, אבל {F:את מתמודדת|M:אתה מתמודד} עם זה מצוין.",
+                    "חלקו את החומר לתקופות קטנות, ככה יותר קל לעכל.",
+                    "אתם לומדים על מנהיגים גדולים, ובסוף תהיו מנהיגים בעצמכם."
                 ]
             },
             "אזרחות": {
@@ -482,7 +560,9 @@
                 ],
                 voice: [
                     "אזרחות זה החיים שלנו. תנסו לקשר את החומר לחדשות, זה תמיד עוזר.", 
-                    "{F:את עושה|M:אתה עושה} עבודה דמוקרטית ונפלאה כאן."
+                    "{F:את עושה|M:אתה עושה} עבודה דמוקרטית ונפלאה כאן.",
+                    "המושגים יכולים לבלבל, אבל ברגע שמבינים את הרעיון - זה רץ.",
+                    "זכרו את עקרון שלטון החוק - וגם את עקרון שלטון הלימודים שלכם עכשיו."
                 ]
             },
             "תנך": {
@@ -493,7 +573,8 @@
                 ],
                 voice: [
                     "תנך זה ספר הספרים. תנסו להבין את הסיפור מאחורי הפסוקים.", 
-                    "קחו נשימה, תקראו את המפרשים אם צריך, הכל ברור בסוף."
+                    "קחו נשימה, תקראו את המפרשים אם צריך, הכל ברור בסוף.",
+                    "השפה של פעם דורשת התרגלות, אבל אתם קולטים את זה יפה מאוד."
                 ]
             },
             "כימיה": {
@@ -504,7 +585,9 @@
                 ],
                 voice: [
                     "{F:תהיי|M:תהיה} ב-סי ריכוז! אנחנו הולכים להפציץ את זה.", 
-                    "אל תילחצו מהטבלה המחזורית. הכל הגיוני ומסודר שם."
+                    "אל תילחצו מהטבלה המחזורית. הכל הגיוני ומסודר שם.",
+                    "סטויכיומטריה זה בסך הכל יחסים וכמויות. אל תוותרו.",
+                    "תרכובת של התמדה וכוח רצון יוצרת הצלחה."
                 ]
             },
             "כללי": {
@@ -516,13 +599,17 @@
                 ],
                 voice: [
                     "{F:את עושה|M:אתה עושה} עבודה מדהימה. אל תתייאשו!", 
-                    "קחו אוויר... תחשבו מחוץ לקופסה, אתם יכולים לפתור את זה בקל."
+                    "קחו אוויר... תחשבו מחוץ לקופסה, אתם יכולים לפתור את זה.",
+                    "את פשוט אלופה. ההתמדה שלך תשתלם בענק.",
+                    "ריכוז שיא! אני רואה את המאמץ שלך והוא מדהים.",
+                    "אל תשכחי לשתות מים, המוח צריך דלק להמשיך להפציץ.",
+                    "נשימה עמוקה פנימה... והחוצה. המשיכו בפוקוס מושלם."
                 ]
             }
         };
 
         const extendedQuotesBreak = [
-            "זמן מעולה ללכת ללטף את דפנה ופיצפץ! 🐈🐾",
+            "זמן מעולה לחלץ עצמות קצת! 🤸‍♀️",
             "שתו כוס מים קרים ותמתחו את הגב. מגיע לכם מנוחה ארוכה מה{subject}.",
             "תנוחו קצת, המוח צריך להטעין מצברים לקראת החלק הבא 🔋",
             "הפסקה של אלופים. תכף חוזרים בכל הכוח כדי להגשים את המטרה: {motive}!",
@@ -533,7 +620,9 @@
         const extendedSpokenBreak = [
             "איזה כיף להיות בהפסקה! קומו קצת מהכיסא, תשתו מים קרים.",
             "המוח שלכם עבד קשה, מגיע לו לנוח קצת עכשיו.",
-            "זה הזמן ללכת ללטף חיות מחמד, לאכול משהו טעים ולהירגע לגמרי. נתראה עוד מעט."
+            "זה הזמן ללכת לאכול משהו טעים ולהירגע לגמרי. נתראה עוד מעט.",
+            "קחי אוויר, תמתחי את הגוף. העבודה הקשה מאחורייך לבינתיים.",
+            "מומלץ להסתכל רחוק מהמסך כדי לשחרר את העיניים. הפסקה נעימה."
         ];
 
         function toggleUnitsVisibility() {
@@ -569,7 +658,7 @@
                     <label>כמה יח"ל?</label>
                     <select class="u-units"><option value="3">3 יח"ל</option><option value="4">4 יח"ל</option><option value="5">5 יח"ל</option></select>
                 </div>
-                <div class="input-block"><label>מה נותן לך מוטיבציה?</label><input type="text" class="u-motive"></div>
+                <div class="input-block"><label>מה נותן לך מוטיבציה?</label><input type="text" class="u-motive" value="להצליח בגדול"></div>
                 <button onclick="removeUserRow(this)" style="position:absolute; top:-10px; left:-10px; background:#ff4d4d; color:white; border:none; border-radius:50%; width:25px; height:25px; cursor:pointer; font-weight:bold;">X</button>
             `;
             container.appendChild(row);
@@ -657,7 +746,7 @@
         }
 
         function resetAllStats() {
-            if(!confirm("אתם בטוחים שאתם רוצים למחוק את כל נתוני הלמידה שלכם?")) return;
+            if(!confirm("אתם בטוחים שאתם רוצים לאפס את סשן הלמידה הנוכחי?")) return;
             pauseTimer();
             appData.state.totalStudy = 0;
             appData.state.totalBreak = 0;
@@ -708,7 +797,6 @@
             });
         }
 
-        // פונקציה לבחירת זמנים, מקבלת גם זמן ידני כשעוברים סשן
         function setSessionTimes(keepRunning = false, manualMinutes = null) {
             if (keepRunning && appData.state.timerId !== null && appData.settings.mode !== 'flexible') {
                 return; 
@@ -716,7 +804,6 @@
             
             let mins = 25;
             if (manualMinutes !== null) {
-                // העדפה לזמן שסופק עכשיו מהפופאפ הגמיש
                 mins = manualMinutes;
                 if(appData.settings.mode === 'flexible') document.getElementById('flexMinutes').value = mins;
             } else if (appData.settings.mode === 'smart') {
@@ -779,27 +866,28 @@
             return "כל הכבוד, תמשיכו ככה!";
         }
 
-        // טיפול במוזיקה דרך JS כדי לפתור את הבעיות (כמו ב-BeatStory)
-        function playMusic(url, btnElement) {
+        // ניהול מוזיקה מעודכן דרך יוטיוב - כעת פועל כראוי
+        function playYTMusic(videoId, btnElement) {
             document.querySelectorAll('.music-btn').forEach(b => b.classList.remove('playing'));
             
-            if (activeAudio) {
-                activeAudio.pause();
-                activeAudio.currentTime = 0;
-            }
-
-            if (url === 'stop') return;
-            
-            btnElement.classList.add('playing');
-            activeAudio = new Audio(url);
-            activeAudio.loop = true;
-            activeAudio.volume = 0.3;
-
-            if (!appData.settings.globalMute) {
-                activeAudio.play().catch(err => {
-                    console.log("Audio block", err);
-                    alert("הדפדפן דורש אינטראקציה כדי לנגן. פשוט לחצו שוב על הכפתור 🎵");
-                });
+            if (ytReady && ytPlayer && ytPlayer.loadVideoById) {
+                if (videoId === 'stop') {
+                    ytPlayer.stopVideo();
+                    return;
+                }
+                
+                btnElement.classList.add('playing');
+                if (!appData.settings.globalMute) {
+                    ytPlayer.unMute();
+                    ytPlayer.setVolume(35); // ווליום נעים ללמידה
+                    ytPlayer.loadVideoById({ 'videoId': videoId });
+                    ytPlayer.playVideo();
+                } else {
+                    ytPlayer.loadVideoById({ 'videoId': videoId });
+                    ytPlayer.pauseVideo();
+                }
+            } else {
+                alert("נגן המוזיקה עדיין נטען, נסו שוב בעוד שנייה.");
             }
         }
 
@@ -809,19 +897,37 @@
             
             if (appData.settings.globalMute) {
                 btn.innerText = "🔇 מערכת מושתקת"; btn.classList.add('muted');
-                if(activeAudio) activeAudio.pause();
+                if(ytReady && ytPlayer && ytPlayer.getPlayerState && ytPlayer.getPlayerState() === YT.PlayerState.PLAYING) {
+                    ytPlayer.pauseVideo();
+                }
                 window.speechSynthesis.cancel();
             } else {
                 btn.innerText = "🔊 השתק הכל (מוזיקה ודיבור)"; btn.classList.remove('muted');
-                if(activeAudio) activeAudio.play();
+                if(ytReady && ytPlayer && document.querySelector('.music-btn.playing')) {
+                    ytPlayer.playVideo();
+                }
             }
         }
 
+        // פונקציית דיבור מעודכנת עם צליל רגוע ונעים יותר
         function speakText(text) {
             if (appData.settings.globalMute || !appData.settings.voiceEnabled) return;
             if ('speechSynthesis' in window) {
                 const utterance = new SpeechSynthesisUtterance(text);
-                utterance.lang = 'he-IL'; utterance.pitch = 1.3; utterance.rate = 1.05;
+                utterance.lang = 'he-IL'; 
+                
+                // הגדרות שהופכות את הקול להרבה יותר נעים ופחות רובוטי-מלחיץ
+                utterance.pitch = 0.9; 
+                utterance.rate = 0.85; 
+                utterance.volume = 0.8;
+
+                // נסיון לאתר קולות עבריים ספציפיים ולבחור אחד טוב
+                const voices = window.speechSynthesis.getVoices();
+                const hebrewVoices = voices.filter(v => v.lang.includes('he') || v.lang.includes('iw'));
+                if (hebrewVoices.length > 0) {
+                    utterance.voice = hebrewVoices[0]; 
+                }
+
                 window.speechSynthesis.speak(utterance);
             }
         }
@@ -875,9 +981,8 @@
                     confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 }});
 
                     if (appData.state.currentMode === 'study') {
-                        speakText("עבודה מדהימה! הסתיים פרק הלמידה. תמלאו איך היה ונצא להפסקה.");
+                        speakText("סיימתם פרק למידה יפה מאוד. מלאו את הטופס ונצא להפסקה רגועה.");
                         
-                        // תצוגה מותנית למצב גמיש בתוך מודל הסקר
                         if(appData.settings.mode === 'flexible') {
                             document.getElementById('flexBreakTimeGroup').style.display = 'block';
                         } else {
@@ -886,12 +991,11 @@
                         
                         setTimeout(() => document.getElementById('surveyModal').style.display = 'flex', 1500);
                     } else {
-                        // סיום הפסקה!
                         if (appData.settings.mode === 'flexible') {
-                            speakText(`ההפסקה נגמרה. כמה זמן תרצו ללמוד עכשיו?`);
+                            speakText(`זמן ההפסקה הסתיים. כמה זמן תרצו ללמוד עכשיו?`);
                             document.getElementById('flexStudyModal').style.display = 'flex';
                         } else {
-                            speakText(`ההפסקה נגמרה. חוזרים ללמוד ${appData.exam.subject}!`);
+                            speakText(`זמן ההפסקה הסתיים. חוזרים ללמוד ${appData.exam.subject}.`);
                             appData.state.currentMode = 'study';
                             updateModeUI();
                             setSessionTimes(false);
@@ -920,7 +1024,7 @@
             appData.state.currentMode = 'break';
             updateModeUI();
             setSessionTimes(false);
-            speakText("הפסקה יזומה הופעלה. קחו נשימה ותנוחו.");
+            speakText("הפסקה יזומה הופעלה. קחו זמן למנוחה.");
         }
 
         function updateModeUI() {
@@ -960,7 +1064,7 @@
             appData.state.currentMode = 'break';
             updateModeUI();
             setSessionTimes(false, nextBreakTime);
-            speakText("שמרתי את ההתקדמות בטבלה. תהנו מההפסקה שלכם!");
+            speakText("שמרתי הכל בטבלה. תהנו מההפסקה.");
         }
 
         function startNextFlexStudy() {
@@ -970,13 +1074,67 @@
             appData.state.currentMode = 'study';
             updateModeUI();
             setSessionTimes(false, studyMins);
-            speakText(`חוזרים ללמוד ${appData.exam.subject}! בהצלחה.`);
+            speakText(`חזרנו ללמידה. בהצלחה.`);
+        }
+
+        // ניהול היסטוריה ב-localStorage
+        function saveSessionToHistory() {
+            if (appData.state.totalStudy === 0) return; // לא נשמור סשן ריק לחלוטין
+            
+            const todayStr = new Date().toLocaleDateString('he-IL');
+            const newSession = {
+                date: todayStr,
+                subject: appData.exam.subject,
+                studyTime: formatTimeSpan(appData.state.totalStudy),
+                breakTime: formatTimeSpan(appData.state.totalBreak),
+                sessionsCount: appData.state.sessionCount
+            };
+
+            let history = JSON.parse(localStorage.getItem('studyAppHistory') || '[]');
+            history.unshift(newSession); // מוסיף להתחלה
+            localStorage.setItem('studyAppHistory', JSON.stringify(history));
+        }
+
+        function showHistoryModal() {
+            const listContainer = document.getElementById('pastSessionsList');
+            let history = JSON.parse(localStorage.getItem('studyAppHistory') || '[]');
+            
+            if (history.length === 0) {
+                listContainer.innerHTML = '<p style="text-align:center; color:#777;">עדיין לא נשמרו למידות. התחילו ללמוד כדי לראות את ההתקדמות שלכם כאן! ✨</p>';
+            } else {
+                let html = '';
+                history.forEach((sess, idx) => {
+                    html += `
+                        <div class="history-item">
+                            <strong style="color: #4facfe;">${sess.date} - ${sess.subject}</strong><br>
+                            ⏱️ זמן למידה: <b>${sess.studyTime}</b> | ☕ זמן הפסקה: <b>${sess.breakTime}</b> | ✅ סשנים: <b>${sess.sessionsCount}</b>
+                        </div>
+                    `;
+                });
+                listContainer.innerHTML = html;
+            }
+            
+            document.getElementById('historyModal').style.display = 'flex';
+        }
+
+        function closeHistoryModal() {
+            document.getElementById('historyModal').style.display = 'none';
+        }
+
+        function clearAllHistory() {
+            if(confirm("בטוחים שאתם רוצים למחוק את כל היסטוריית הלמידות שלכם? הנתונים לא יחזרו.")) {
+                localStorage.removeItem('studyAppHistory');
+                showHistoryModal(); // מרפרש את הרשימה (תהיה ריקה)
+            }
         }
 
         function finishStudying() {
             pauseTimer();
-            if(activeAudio) activeAudio.pause();
+            if (ytReady && ytPlayer && ytPlayer.stopVideo) ytPlayer.stopVideo();
             
+            // שמירת נתונים לזיכרון (היסטוריה קודמת)
+            saveSessionToHistory();
+
             document.getElementById('mainApp').style.display = 'none';
             document.getElementById('summaryScreen').style.display = 'block';
             
@@ -1003,11 +1161,11 @@
                 חרשתם ${totalMins} דקות נטו! זו כמות זמן אידיאלית להפנים את החומר ב${appData.exam.subject}. קחו מנוחה ארוכה עכשיו.`;
             } else {
                 adviceHTML = `<strong>וואו, חרישה מטורפת של אלופים! 🏆</strong><br>
-                ${totalMins} דקות נטו של למידה! נתתם פה עבודה של 100%. לכו לעשות משהו כיף, תראו סדרה, תלטפו את החיות מחמד - מגיע לכם!`;
+                ${totalMins} דקות נטו של למידה! נתתם פה עבודה של 100%. לכו לעשות משהו כיף, תראו סדרה, מגיע לכם לנוח!`;
             }
             
             document.getElementById('sumAdvice').innerHTML = adviceHTML;
-            speakText("כל הכבוד! סיימתם ללמוד להיום. מגיע לכם לנוח.");
+            speakText("סיכום הלמידה הושלם. מגיע לכם לנוח עכשיו.");
             
             const end = Date.now() + 4000;
             (function frame() {
