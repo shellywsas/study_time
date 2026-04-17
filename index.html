@@ -116,17 +116,15 @@
             <audio id="bgMusicPlayer" loop></audio>
 
             <button class="music-btn" onclick="playAudio('https://cdn.pixabay.com/audio/2022/05/27/audio_1808fbf07a.mp3', this)"><span>📚</span> Lofi Girl - למידה ורוגע</button>
-            <button class="music-btn" onclick="playAudio('https://cdn.pixabay.com/audio/2021/09/06/audio_9ec6a057ca.mp3', this)"><span>🍃</span> טבע וציוץ ציפורים</button>
-            <button class="music-btn" onclick="playAudio('https://cdn.pixabay.com/audio/2022/01/18/audio_d1a1bb73fc.mp3', this)"><span>☕</span> אווירת בית קפה</button>
-            <button class="music-btn" onclick="playAudio('https://cdn.pixabay.com/audio/2022/02/07/audio_82c2d4a23a.mp3', this)"><span>🌊</span> גלי ים מרגיעים</button>
-            <button class="music-btn" onclick="playAudio('https://cdn.pixabay.com/audio/2022/02/22/audio_1e793cb7cd.mp3', this)"><span>🔥</span> פיצפוצי מדורה</button>
             
             <hr style="border-top:1px solid rgba(0,0,0,0.1); margin: 15px 0;">
             <button class="music-btn" onclick="playAudio('stop', this)" style="background: rgba(255,255,255,0.4); justify-content: center;">⏹️ כבה מוזיקה רקע</button>
             <button id="muteBtn" class="music-btn mute-toggle" onclick="toggleGlobalMute()">🔊 השתק הכל (כולל דיבור)</button>
         </div>
 
-        <div class="glass-card timer-panel">
+        <div class="glass-card panel timer-panel">
+            <button id="fullscreenBtn" onclick="toggleFullscreen()" style="position: absolute; top: 15px; left: 15px; background: rgba(255,255,255,0.7); border: 1px solid rgba(0,0,0,0.1); border-radius: 10px; width: 45px; height: 45px; font-size: 1.5em; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: 0.3s; z-index: 10; color: #4a148c; display: flex; justify-content: center; align-items: center;">⛶</button>
+            
             <h1><span class="top-icon">📚✨</span> פוקוס למידה</h1>
             <div class="mode-indicator" id="modeIndicator">📚 זמן למידה</div>
             

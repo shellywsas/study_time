@@ -1,4 +1,5 @@
 let isEditingMode = false;
+let isAppFullscreen = false;
 
 let appData = {
     users: [], 
@@ -175,6 +176,35 @@ function resetAllStats() {
     setSessionTimes(false);
 }
 
+function toggleFullscreen() {
+    const timerPanel = document.querySelector('.timer-panel');
+    const musicPanel = document.querySelector('.music-panel');
+    const statsPanel = document.querySelector('.stats-panel');
+    const btn = document.getElementById('fullscreenBtn');
+    
+    isAppFullscreen = !isAppFullscreen;
+    
+    if (isAppFullscreen) {
+        musicPanel.style.display = 'none';
+        statsPanel.style.display = 'none';
+        
+        timerPanel.style.flex = 'none';
+        timerPanel.style.width = '100%';
+        timerPanel.style.maxWidth = '1200px';
+        btn.innerText = '✖';
+        btn.title = "הקטן חזרה";
+    } else {
+        musicPanel.style.display = 'flex';
+        statsPanel.style.display = 'flex';
+        
+        timerPanel.style.flex = '2';
+        timerPanel.style.width = 'auto';
+        timerPanel.style.maxWidth = 'none';
+        btn.innerText = '⛶';
+        btn.title = "הגדל למסך מלא";
+    }
+}
+
 function buildDynamicUI() {
     const tr = document.createElement('tr');
     tr.innerHTML = '<th>סשן</th>';
@@ -247,7 +277,6 @@ function setSessionTimes(keepRunning = false, manualMinutes = null) {
         appData.state.timeLeft = appData.state.initialTime;
         updateDisplay();
         
-        // פתיחת הנעילה של הטיימר כשהוא מתאפס לסשן חדש
         document.getElementById('flexMinutes').disabled = false;
     }
 }
@@ -304,11 +333,13 @@ function playAudio(url, btnElement) {
     
     if (url === 'stop') {
         player.pause();
+        player.currentTime = 0;
         return;
     }
     
     btnElement.classList.add('playing');
     player.src = url;
+    player.load(); 
     player.volume = 0.3; 
     
     if (!appData.settings.globalMute) {
@@ -335,14 +366,16 @@ function toggleGlobalMute() {
         btn.innerText = "🔊 השתק הכל (כולל דיבור)"; 
         btn.classList.remove('muted');
         if (player.src && player.src !== window.location.href) {
-            player.play();
+            player.play().catch(e => console.log(e));
         }
     }
 }
 
+// ==== התיקון של הדברן: נוספה שורת window.speechSynthesis.cancel() ====
 function speakText(text) {
     if (appData.settings.globalMute || !appData.settings.voiceEnabled) return;
     if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel(); // משתיק כל דיבור קודם כדי למנוע את ה"שיגעון"
         const utterance = new SpeechSynthesisUtterance(text);
         utterance.lang = 'he-IL'; 
         
@@ -376,7 +409,6 @@ function startTimer() {
     if (appData.state.timeLeft <= 0) setSessionTimes();
     if (appData.state.timerId !== null) return;
 
-    // נועלים את תיבת הזנת הדקות ברגע שהטיימר מופעל
     document.getElementById('flexMinutes').disabled = true;
 
     document.getElementById('startBtn').innerText = 'ממשיכים...';
@@ -429,6 +461,7 @@ function startTimer() {
                     appData.state.currentMode = 'study';
                     updateModeUI();
                     setSessionTimes(false);
+                    startTimer(); 
                 }
             }
         }
@@ -447,8 +480,6 @@ function resetTimer() {
     appData.state.timeLeft = appData.state.initialTime;
     updateDisplay();
     document.getElementById('startBtn').innerText = 'התחלה ▶';
-    
-    // משחררים את הנעילה של תיבת הטקסט במקרה של איפוס
     document.getElementById('flexMinutes').disabled = false;
 }
 
@@ -458,18 +489,47 @@ function forceBreak() {
     updateModeUI();
     setSessionTimes(false);
     speakText("הפסקה יזומה הופעלה. קחו זמן למנוחה ורגיעה.");
+    startTimer(); 
+}
+
+function endBreakEarly() {
+    pauseTimer();
+    if (appData.settings.mode === 'flexible') {
+        speakText(`ההפסקה הסתיימה מוקדם. כמה דקות תרצו ללמוד עכשיו?`);
+        document.getElementById('flexStudyModal').style.display = 'flex';
+    } else {
+        speakText(`ההפסקה הסתיימה מוקדם. חוזרים ללמוד ${appData.exam.subject}. בהצלחה.`);
+        appData.state.currentMode = 'study';
+        updateModeUI();
+        setSessionTimes(false);
+        startTimer(); 
+    }
 }
 
 function updateModeUI() {
     const ind = document.getElementById('modeIndicator');
+    const forceBreakBtn = document.querySelector('.btn-force-break'); 
+
     if (appData.state.currentMode === 'study') {
         document.body.classList.remove('break-mode');
         ind.innerText = `📚 זמן למידה (${appData.exam.subject})`;
         ind.style.color = '#ff4081';
+        
+        if (forceBreakBtn) {
+            forceBreakBtn.innerText = 'קחו הפסקה עכשיו ☕';
+            forceBreakBtn.onclick = forceBreak;
+            forceBreakBtn.style.background = 'linear-gradient(45deg, #8e2de2, #4a00e0)';
+        }
     } else {
         document.body.classList.add('break-mode');
         ind.innerText = '☕ זמן הפסקה';
         ind.style.color = '#4a148c';
+        
+        if (forceBreakBtn) {
+            forceBreakBtn.innerText = 'סיים הפסקה מוקדם 📚';
+            forceBreakBtn.onclick = endBreakEarly;
+            forceBreakBtn.style.background = 'linear-gradient(45deg, #4facfe, #00f2fe)';
+        }
     }
 }
 
@@ -500,6 +560,7 @@ function saveSurvey() {
     updateModeUI();
     setSessionTimes(false, nextBreakTime);
     speakText("שמרתי את ההתקדמות בטבלה. תהנו מההפסקה שלכם.");
+    startTimer(); 
 }
 
 function startNextFlexStudy() {
@@ -510,6 +571,7 @@ function startNextFlexStudy() {
     updateModeUI();
     setSessionTimes(false, studyMins);
     speakText(`חוזרים ללמוד ${appData.exam.subject}. בהצלחה רבה.`);
+    startTimer(); 
 }
 
 function saveSessionToHistory() {
@@ -564,7 +626,8 @@ function clearAllHistory() {
 
 function finishStudying() {
     pauseTimer();
-    document.getElementById('bgMusicPlayer').pause();
+    const player = document.getElementById('bgMusicPlayer');
+    if (player) player.pause();
     
     saveSessionToHistory();
 
@@ -586,7 +649,6 @@ function finishStudying() {
     let namesStr = appData.users.map(u => u.name).join(' ו-');
     let adviceHTML = "";
 
-    // חישוב היחס בין הלמידה להפסקה (הגנה מפני חלוקה באפס)
     let ratio = appData.state.totalBreak > 0 ? (appData.state.totalStudy / appData.state.totalBreak) : 999;
 
     if (totalMins < 30) {
@@ -600,7 +662,6 @@ function finishStudying() {
         ${totalMins} דקות נטו של למידה! `;
     }
 
-    // הוספת ההערה לגבי היחס
     if (totalMins > 0) {
         if (ratio > 10) {
             adviceHTML += "<br><br>⚠️ <strong>וואו, חרישה בלי רחמים:</strong> כמעט ולא לקחתם הפסקות! זה הספק מטורף, אבל בפעם הבאה כדאי לנוח קצת יותר כדי שהחומר ייספג טוב יותר במוח.";
