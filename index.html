@@ -1,0 +1,1021 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📚</text></svg>">
+    <title>📚 מערכת הלמידה החכמה ✨</title>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        @keyframes gradientBG {
+            0% {background-position: 0% 50%;}
+            50% {background-position: 100% 50%;}
+            100% {background-position: 0% 50%;}
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(-45deg, #fbc2eb, #a6c1ee, #fccb90, #d57eeb);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            transition: background 1s ease;
+            overflow-x: hidden;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        body.break-mode {
+            background: linear-gradient(-45deg, #a1c4fd, #c2e9fb, #e0c3fc, #8ec5fc);
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            padding: 30px;
+            border-radius: 30px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+        }
+
+        /* מסך ההגדרות */
+        #setupScreen {
+            max-width: 800px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .setup-section {
+            background: rgba(255,255,255,0.5);
+            padding: 20px;
+            border-radius: 20px;
+            margin-bottom: 20px;
+            text-align: right;
+        }
+
+        .setup-section h3 { margin-top: 0; color: #4a148c; margin-bottom: 15px;}
+        
+        .user-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+            align-items: flex-end;
+            flex-wrap: wrap;
+            background: rgba(255,255,255,0.4);
+            padding: 15px;
+            border-radius: 15px;
+            position: relative;
+        }
+
+        .input-block {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            flex: 1;
+            min-width: 120px;
+        }
+
+        .input-block label {
+            font-size: 0.9em;
+            font-weight: bold;
+            color: #444;
+        }
+
+        input, select {
+            padding: 10px;
+            border-radius: 10px;
+            border: 1px solid rgba(0,0,0,0.1);
+            background: rgba(255,255,255,0.8);
+            font-size: 1em;
+            outline: none;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #d500f9, #ff4081);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.3em;
+            font-weight: bold;
+            border-radius: 30px;
+            cursor: pointer;
+            box-shadow: 0 8px 15px rgba(255, 64, 129, 0.4);
+            transition: transform 0.2s;
+        }
+        .btn-primary:hover { transform: scale(1.05); }
+
+        /* מסך האפליקציה המרכזי */
+        #mainApp {
+            display: none;
+            width: 100%;
+            max-width: 1500px;
+            gap: 20px;
+            justify-content: center;
+            align-items: stretch;
+            flex-wrap: wrap;
+        }
+
+        .panel { 
+            flex: 1; 
+            min-width: 300px; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 15px;
+            height: fit-content;
+        }
+        
+        .timer-panel { 
+            flex: 2; 
+            min-width: 450px; 
+            text-align: center; 
+        }
+
+        /* אזור הסטטיסטיקות */
+        .stats-panel h2 { margin-top: 0; color: #4a148c; text-align: center; }
+        .time-trackers { display: flex; justify-content: space-around; background: rgba(255,255,255,0.5); padding: 15px; border-radius: 15px; font-weight: bold;}
+        .table-container { background: rgba(255,255,255,0.6); border-radius: 15px; padding: 10px; max-height: 250px; overflow-y: auto;}
+        table { width: 100%; border-collapse: collapse; text-align: center; font-size: 0.95em;}
+        th, td { padding: 10px; border-bottom: 1px solid rgba(0,0,0,0.1); }
+        tr { transition: background 0.3s; }
+        tr:hover { background: rgba(255,255,255,0.8); }
+        
+        .side-btn { background: rgba(255,255,255,0.7); border: none; padding: 12px; border-radius: 15px; font-weight: bold; cursor: pointer; transition: 0.2s; width: 100%; margin-bottom: 10px;}
+        .side-btn:hover { background: white; transform: scale(1.02); }
+        .btn-danger { background: #ff4d4d; color: white; }
+        .btn-success { background: #4ade80; color: white; font-size: 1.2em; padding: 15px;}
+
+        /* אזור המוזיקה */
+        .music-panel {
+            background: rgba(255, 255, 255, 0.6);
+            border-right: 5px solid #d500f9;
+        }
+        .music-panel h2 { margin-top: 0; color: #4a148c; text-align: center; font-size: 1.5em; }
+        .music-btn { display: flex; align-items: center; justify-content: flex-start; gap: 10px; width: 100%; padding: 12px 15px; margin-bottom: 10px; border-radius: 15px; border: none; background: rgba(255,255,255,0.7); font-size: 1.05em; cursor: pointer; transition: all 0.3s; font-weight: 500;}
+        .music-btn:hover { background: white; transform: translateX(-5px); }
+        .music-btn.playing { background: linear-gradient(45deg, #e0c3fc, #8ec5fc); font-weight: bold; box-shadow: 0 4px 10px rgba(0,0,0,0.1); transform: translateX(-5px);}
+        .mute-toggle { background: #ff4d4d; color: white; margin-top: 10px; justify-content: center;}
+        .mute-toggle.muted { background: #555; }
+
+        /* טיימר מרכזי */
+        h1 { color: #333; font-size: 2.8em; margin: 0 0 10px 0; background: transparent; padding: 0;}
+        .top-icon { font-size: 1.2em; text-shadow: 2px 2px 4px rgba(0,0,0,0.2); }
+        .time { font-size: 7em; font-weight: 900; color: #2b2d42; margin: 10px 0; font-variant-numeric: tabular-nums; text-shadow: 3px 3px 6px rgba(255,255,255,0.6); }
+        .controls { display: flex; justify-content: center; gap: 15px; margin-top: 15px; flex-wrap: wrap;}
+        .action-btn { border: none; padding: 15px 25px; font-size: 1.2em; font-weight: bold; border-radius: 20px; cursor: pointer; color: white; transition: transform 0.2s; }
+        .action-btn:hover { transform: translateY(-3px); }
+        .btn-start { background: linear-gradient(45deg, #4facfe, #00f2fe); }
+        .btn-pause { background: linear-gradient(45deg, #f6d365, #fda085); }
+        .btn-reset { background: linear-gradient(45deg, #ff0844, #ffb199); }
+        .btn-force-break { background: linear-gradient(45deg, #8e2de2, #4a00e0); width: 100%; margin-top: 10px;}
+        .motivation-box { margin-top: 25px; padding: 15px; background: rgba(255, 255, 255, 0.6); border-radius: 15px; font-size: 1.3em; font-weight: 600; color: #4a148c; min-height: 80px; display: flex; align-items: center; justify-content: center; text-align: center; transition: all 0.5s ease;}
+        
+        .mode-indicator { font-size: 1.5em; font-weight: bold; color: #ff4081; margin-bottom: 10px; }
+
+        /* מודלים */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center; backdrop-filter: blur(5px);}
+        .modal-content { background: white; padding: 30px; border-radius: 25px; width: 90%; max-width: 550px; text-align: center; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 40px rgba(0,0,0,0.2); animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);}
+        @keyframes popIn { 0% {transform: scale(0.8); opacity: 0;} 100% {transform: scale(1); opacity: 1;} }
+        .survey-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 10px;}
+
+        /* מסך סיכום */
+        #summaryScreen { display: none; max-width: 800px; width: 100%; text-align: center; background: rgba(255, 255, 255, 0.85); padding: 50px; border-radius: 30px;}
+        #summaryScreen h1 { color: #d500f9; font-size: 3.5em; margin-bottom: 5px; background: transparent;}
+        .summary-stats { display: flex; justify-content: center; gap: 30px; margin: 30px 0; font-size: 1.5em; font-weight: bold; flex-wrap: wrap;}
+        .summary-box { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); flex: 1; min-width: 150px;}
+        .time-badge { display: inline-block; background: #e0c3fc; padding: 5px 15px; border-radius: 15px; font-weight: bold; color: #4a148c; margin: 0 10px;}
+        .advice-box { background: rgba(74, 20, 140, 0.1); border-left: 5px solid #d500f9; padding: 20px; border-radius: 0 15px 15px 0; text-align: right; margin-bottom: 30px; font-size: 1.2em;}
+    </style>
+</head>
+<body>
+
+    <div class="glass-card" id="setupScreen">
+        <h1 style="color: #4a148c;"><span class="top-icon">📚🚀</span> מוכנים לחרוש? </h1>
+        <p>בואו נגדיר את סביבת הלמידה המושלמת עבורכם.</p>
+
+        <div class="setup-section">
+            <h3>📅 מה המטרה שלנו?</h3>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <div class="input-block">
+                    <label>מקצוע הלימוד:</label>
+                    <select id="examSubject" onchange="toggleUnitsVisibility()">
+                        <option value="פיזיקה">פיזיקה</option>
+                        <option value="מתמטיקה" selected>מתמטיקה</option>
+                        <option value="אנגלית">אנגלית</option>
+                        <option value="לשון">לשון</option>
+                        <option value="היסטוריה">היסטוריה</option>
+                        <option value="אזרחות">אזרחות</option>
+                        <option value="תנך">תנ"ך</option>
+                        <option value="כימיה">כימיה</option>
+                        <option value="מחשבים">מדעי המחשב</option>
+                        <option value="כללי">אחר / כללי</option>
+                    </select>
+                </div>
+                <div class="input-block"><label>סוג הלמידה:</label>
+                    <select id="examType" onchange="toggleDateVisibility()">
+                        <option value="מבחן">מבחן רגיל</option>
+                        <option value="מתכונת">מתכונת</option>
+                        <option value="בגרות">בגרות</option>
+                        <option value="למידה שוטפת">ללא מבחן (למידה שוטפת)</option>
+                    </select>
+                </div>
+                <div class="input-block" id="dateBlock"><label>תאריך הבחינה:</label>
+                    <input type="date" id="examDate">
+                </div>
+            </div>
+        </div>
+
+        <div class="setup-section">
+            <h3>👥 מי לומד היום?</h3>
+            <div id="usersContainer">
+                <div class="user-row">
+                    <div class="input-block"><label>איך קוראים לך?</label><input type="text" value="שלי" class="u-name"></div>
+                    <div class="input-block"><label>מין למשפטי מוטיבציה?</label>
+                        <select class="u-gender">
+                            <option value="F" selected>נקבה</option>
+                            <option value="M">זכר</option>
+                        </select>
+                    </div>
+                    <div class="input-block unit-block"><label>כמה יח"ל?</label><select class="u-units"><option value="3">3 יח"ל</option><option value="4">4 יח"ל</option><option value="5" selected>5 יח"ל</option></select></div>
+                    <div class="input-block"><label>מה נותן לך מוטיבציה?</label><input type="text" class="u-motive" value="פיצפץ ודפנה"></div>
+                </div>
+            </div>
+            <button onclick="addUserRow()" style="background:none; border:1px solid #4a148c; border-radius:10px; padding:5px 10px; cursor:pointer; font-weight: bold; color:#4a148c;">+ הוסף חבר/ה ללמידה</button>
+        </div>
+
+        <div class="setup-section">
+            <h3>⏱️ איך ננהל את הזמנים?</h3>
+            <div class="input-block">
+                <select id="timeMode" onchange="toggleManualTime()" style="font-weight: bold; background: #f3e8ff;">
+                    <option value="smart">🤖 מצב חכם (חישוב אוטומטי בהתאם לזמן!)</option>
+                    <option value="fixed">⏰ מצב קבוע (נגדיר כעת זמני למידה והפסקה קבועים מראש)</option>
+                    <option value="flexible">🎛️ מצב גמיש (לפני כל טיימר נבחר ידנית כמה דקות ללמוד/לנוח)</option>
+                </select>
+            </div>
+            
+            <div id="manualTimeInputs" style="display:none; margin-top:10px; background: rgba(255,255,255,0.6); padding: 10px; border-radius: 10px;">
+                זמן למידה קבוע: <input type="number" id="setupStudyTime" value="45" style="width:60px;"> דק' | 
+                זמן הפסקה קבוע: <input type="number" id="setupBreakTime" value="10" style="width:60px;"> דק'
+            </div>
+        </div>
+
+        <div class="setup-section">
+            <h3>🗣️ הערות ומוטיבציה קולית</h3>
+            <label style="font-weight: bold; cursor: pointer;">
+                <input type="checkbox" id="enableVoice" checked>
+                אני מסכים/ה שהמערכת תדבר אליי ותעודד אותי במהלך הלמידה.
+            </label>
+        </div>
+
+        <button class="btn-primary" id="startMainBtn" onclick="initApp()">התחילו ללמוד! ✨</button>
+    </div>
+
+    <div id="mainApp">
+        
+        <div class="glass-card panel music-panel">
+            <h2>תפריט מוזיקה ואווירה 🎧</h2>
+            <button class="music-btn" onclick="playMusic('https://upload.wikimedia.org/wikipedia/commons/4/4b/Rain_on_the_roof.ogg', this)"><span>🌧️</span> גשם חזק על חלון</button>
+            <button class="music-btn" onclick="playMusic('https://upload.wikimedia.org/wikipedia/commons/4/47/Coffee_shop_ambience.ogg', this)"><span>☕</span> רעש לבן - בית קפה</button>
+            <button class="music-btn" onclick="playMusic('https://upload.wikimedia.org/wikipedia/commons/c/c2/Forest_ambience.ogg', this)"><span>🍃</span> טבע וציוץ ציפורים</button>
+            <button class="music-btn" onclick="playMusic('https://upload.wikimedia.org/wikipedia/commons/1/1a/Waves_on_a_rocky_beach.ogg', this)"><span>🌊</span> גלי ים מרגיעים</button>
+            <button class="music-btn" onclick="playMusic('https://upload.wikimedia.org/wikipedia/commons/b/b8/Campfire_sound.ogg', this)"><span>🔥</span> פצפוצי מדורה בלילה</button>
+            
+            <hr style="border-top:1px solid rgba(0,0,0,0.1); margin: 15px 0;">
+            <button class="music-btn" onclick="playMusic('stop', this)" style="background: rgba(255,255,255,0.4); justify-content: center;">⏹️ כבה מוזיקה רקע</button>
+            <button id="muteBtn" class="music-btn mute-toggle" onclick="toggleGlobalMute()">🔊 השתק הכל (כולל דיבור)</button>
+        </div>
+
+        <div class="glass-card timer-panel">
+            <h1><span class="top-icon">📚✨</span> פוקוס למידה</h1>
+            <div class="mode-indicator" id="modeIndicator">📚 זמן למידה</div>
+            
+            <div class="input-block" id="flexibleTimeGroup" style="display: none; width: 60%; margin: 0 auto; margin-bottom: 15px; background: rgba(255,255,255,0.5); padding: 10px; border-radius: 15px;">
+                <label>כמה דקות תרצו בטיימר הנוכחי?</label>
+                <input type="number" id="flexMinutes" value="25" min="1" onchange="updateTimerFromInput()" style="text-align: center; font-weight: bold; font-size: 1.2em;">
+            </div>
+            
+            <div class="time" id="display">00:00</div>
+            
+            <div class="controls">
+                <button class="action-btn btn-start" onclick="startTimer()" id="startBtn">התחלה ▶</button>
+                <button class="action-btn btn-pause" onclick="pauseTimer()">עצירה ⏸</button>
+                <button class="action-btn btn-reset" onclick="resetTimer()">איפוס טיימר ↺</button>
+                <button class="action-btn btn-force-break" onclick="forceBreak()">קחו הפסקה עכשיו ☕</button>
+            </div>
+
+            <div class="motivation-box" id="motivationText">
+                הכל מוכן! לחצו על התחלה כשתרצו.
+            </div>
+        </div>
+
+        <div class="glass-card panel stats-panel">
+            <h2>התקדמות וסטטיסטיקות 📊</h2>
+            <div class="time-trackers">
+                <div>זמן למידה נטו:<br><span id="totalStudyDisplay" style="color: #4facfe; font-size:1.2em;">00:00</span></div>
+                <div>זמן הפסקות:<br><span id="totalBreakDisplay" style="color: #ffb199; font-size:1.2em;">00:00</span></div>
+            </div>
+            
+            <h4 style="margin: 15px 0 5px 0; color:#4a148c; text-align:right;">סיכום סשנים:</h4>
+            <div class="table-container">
+                <table id="historyTable">
+                    <thead id="historyHead"></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            
+            <hr style="border-top:1px solid rgba(0,0,0,0.1); margin: 15px 0;">
+            <button class="side-btn" onclick="editSettings()">⚙️ עריכת הגדרות למידה</button>
+            <button class="side-btn btn-danger" onclick="resetAllStats()">🗑️ איפוס מלא של הנתונים</button>
+            <button class="side-btn btn-success" onclick="finishStudying()">🎓 סיימתי ללמוד להיום! 🎉</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="surveyModal">
+        <div class="modal-content">
+            <h2 style="color:#d500f9; margin-top:0;">הזמן נגמר! 🎉 איך היה הסשן?</h2>
+            <p style="color:#555; margin-bottom: 20px;">מלאו את השאלון כדי לעדכן את טבלת המעקב שלכם בצד ימין.</p>
+            <div id="surveyFormsContainer"></div>
+            
+            <div id="flexBreakTimeGroup" style="display:none; margin-top: 15px; background: rgba(255,255,255,0.8); padding: 15px; border-radius: 10px; border: 2px dashed #ffb199;">
+                <label style="font-weight:bold; color:#d500f9; display:block; margin-bottom:10px;">☕ כמה דקות הפסקה תרצו עכשיו?</label>
+                <input type="number" id="flexBreakInput" value="10" min="1" style="width: 100px; text-align: center; font-size:1.2em;">
+            </div>
+
+            <button class="btn-primary" onclick="saveSurvey()" style="font-size: 1.1em; padding: 12px 25px; margin-top: 15px; width: 100%;">שמירה ויציאה להפסקה ☕</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="flexStudyModal">
+        <div class="modal-content">
+            <h2 style="color:#4facfe; margin-top:0;">ההפסקה נגמרה! 📚</h2>
+            <p style="color:#555; margin-bottom: 20px;">כמה דקות תרצו להקדיש לסשן הלמידה הבא?</p>
+            <input type="number" id="flexStudyInput" value="25" min="1" style="width: 120px; text-align: center; font-size: 1.5em; padding: 10px; border: 2px solid #4facfe; border-radius: 10px;">
+            <br><br>
+            <button class="btn-primary" onclick="startNextFlexStudy()" style="width: 100%;">יאללה, חוזרים לחרוש! 💪</button>
+        </div>
+    </div>
+
+    <div id="summaryScreen">
+        <h1><span class="top-icon">🎉🎓</span> כל הכבוד! סיימתם!</h1>
+        <p style="font-size: 1.4em; color: #444;">הנה הסיכום של העבודה שעשיתם היום ב<span id="sumSubject" style="font-weight:bold;"></span> <span id="sumExamType"></span>:</p>
+        
+        <div style="margin-bottom: 20px;">
+            <span class="time-badge">🕒 התחלה: <span id="sumStartTime"></span></span>
+            <span class="time-badge">🕒 סיום: <span id="sumEndTime"></span></span>
+        </div>
+
+        <div class="summary-stats">
+            <div class="summary-box">
+                <div style="color: #4facfe; font-size: 2.5em;" id="sumStudyTime">00:00</div>
+                <div>זמן חרישה נטו 📚</div>
+            </div>
+            <div class="summary-box">
+                <div style="color: #ffb199; font-size: 2.5em;" id="sumBreakTime">00:00</div>
+                <div>זמן מנוחה ☕</div>
+            </div>
+            <div class="summary-box">
+                <div style="color: #d500f9; font-size: 2.5em;" id="sumSessions">0</div>
+                <div>סשנים שהושלמו ✅</div>
+            </div>
+        </div>
+
+        <div class="advice-box" id="sumAdvice"></div>
+        <button class="btn-primary" onclick="window.location.reload()">התחלו סשן חדש לגמרי ↺</button>
+    </div>
+
+    <script>
+        let isEditingMode = false;
+        let activeAudio = null; // משתנה גלובלי לניהול המוזיקה ב-JS כמו ב-BeatStory
+
+        let appData = {
+            users: [], exam: { type: 'מבחן', subject: 'מתמטיקה', date: null, daysLeft: 0 },
+            settings: { mode: 'smart', fixedStudy: 45, fixedBreak: 10, voiceEnabled: true, globalMute: false },
+            state: { currentMode: 'study', timeLeft: 0, initialTime: 0, timerId: null, quoteId: null, totalStudy: 0, totalBreak: 0, sessionCount: 0, startTimeStr: '' }
+        };
+
+        const quotesDB = {
+            "פיזיקה": {
+                study: [
+                    "העבודה שווה לאנרגיה ש{F:את משקיעה|M:אתה משקיע} עכשיו! {F:תני|M:תן} גז בפיזיקה ⚡", 
+                    "ניוטון היה מסתכל עליך עכשיו, {name}, ופשוט מוחא כפיים! 🍎", 
+                    "הכבידה לא תמשוך {F:אותך|M:אותך} למטה!",
+                    "עוד משוואת תנועה אחת ו{F:את שולטת|M:אתה שולט} בחומר לחלוטין!",
+                    "קינמטיקה או דינמיקה - {F:את מפרקת|M:אתה מפרק} את זה לגורמים!",
+                    "{F:אלופה|M:אלוף} בפיזיקה! וקטורים זה קטן עליך."
+                ],
+                voice: [
+                    "חבר'ה, כוחות ווקטורים זה קטן עליכם. לנשום עמוק ולפרק את התרגיל.", 
+                    "אם הפיזיקה קשה עכשיו, תזכרו שהמאמץ בונה לכם את השריר במוח.",
+                    "{F:את אלופה|M:אתה אלוף}, אל תוותרו גם אם המשוואה מסתבכת."
+                ]
+            },
+            "מתמטיקה": {
+                study: [
+                    "ה-{units} יח\"ל קטן עליך, {name}! {F:תני|M:תן} בראש! 💯", 
+                    "עוד נגזרת, עוד אינטגרל, עוד צעד קטן ל-100!", 
+                    "טריגו, אלגברה, חדו\"א... {F:את חזקה|M:אתה חזק} יותר מזה!",
+                    "{F:מלכת|M:מלך} הפונקציות! רק להמשיך להציב ולהצליח.",
+                    "הנגזרת של ההשקעה שלך היא הצלחה בטוחה!"
+                ],
+                voice: [
+                    "אם נתקעתם במשוואה, קחו רגע, תסתכלו על הנתונים שוב. הכל מסתדר בסוף.", 
+                    "זה רק עוד תרגיל במתמטיקה בדרך להצלחה מטורפת. {F:את תותחית|M:אתה תותח}!",
+                    "תזכרו, כל טעות בחישוב היא רק דרך ללמוד לתרגיל הבא."
+                ]
+            },
+            "מחשבים": {
+                study: [
+                    "System.out.println(\"{name} {F:האלופה|M:האלוף}!\"); 💻",
+                    "{F:המתכנתת הכי טובה|M:המתכנת הכי טוב} בכיתה! באגים לא מפחידים {F:אותך|M:אותך}.",
+                    "עוד לולאה אחת, עוד משפט תנאי, והפרויקט מושלם! 🚀"
+                ],
+                voice: [
+                    "אם יש שגיאה, אל תילחצו. תקראו את השגיאה, התשובה בדרך כלל שם.",
+                    "קוד יפה דורש ריכוז. {F:את עושה|M:אתה עושה} עבודה מעולה."
+                ]
+            },
+            "אנגלית": {
+                study: [
+                    "Practice makes perfect, {name}! You're doing great! 🌍", 
+                    "עוד אנסין אחד מאחורינו. ה-{units} יחידות האלה בידיים שלכם!", 
+                    "Present Perfect? More like Student Perfect! 🌟",
+                    "{F:אלופה|M:אלוף} באנגלית! שום Unseen לא יפיל {F:אותך|M:אותך}."
+                ],
+                voice: [
+                    "אנגלית זה עניין של תרגול וביטחון. אל תפחדו לטעות, ככה לומדים הכי טוב.", 
+                    "You are amazing, just keep going! {F:אלופה|M:אלוף}!"
+                ]
+            },
+            "לשון": {
+                study: [
+                    "בניין התפעל או הפעיל? מה שזה לא יהיה, {F:את אלופה|M:אתה אלוף}! 📖", 
+                    "שורשים ומשקלים לא יפחידו {F:אותך|M:אותך}!", 
+                    "תזכרו - הפועל הוא רק חבר, והתחביר הוא משחק חשיבה."
+                ],
+                voice: [
+                    "אם נתקעתם בזיהוי גזרות, פשוט תגידו את המילה בקול רם. זה תמיד עוזר.", 
+                    "לשון דורש דיוק, ואתם הכי מדויקים שיש."
+                ]
+            },
+            "היסטוריה": {
+                study: [
+                    "ההיסטוריה נכתבת על ידי המנצחים, ו{F:את הולכת|M:אתה הולך} לנצח! 👑", 
+                    "תזכרו את התאריכים, אבל יותר חשוב - תזכרו שאתם מסוגלים הכל.", 
+                    "עוד פרק, עוד אירוע עולמי ש{F:את שולטת|M:אתה שולט} בו!"
+                ],
+                voice: [
+                    "היסטוריה זה פשוט סיפור מרתק. תנסו לדמיין שאתם שם, זה יעזור לזכור הכל.", 
+                    "יש הרבה לקרוא, אבל {F:את מתמודדת|M:אתה מתמודד} עם זה מצוין."
+                ]
+            },
+            "אזרחות": {
+                study: [
+                    "זכויות אדם ואזרח מתחילות בזכות שלך להצליח בגדול! 🇮🇱", 
+                    "הפרדת רשויות? העיקר לא להפריד את העיניים מהמטרה: {motive}!", 
+                    "מגילת העצמאות שלך תיכתב אחרי ש{F:תסיימי|M:תסיים} את הלמידה הזו."
+                ],
+                voice: [
+                    "אזרחות זה החיים שלנו. תנסו לקשר את החומר לחדשות, זה תמיד עוזר.", 
+                    "{F:את עושה|M:אתה עושה} עבודה דמוקרטית ונפלאה כאן."
+                ]
+            },
+            "תנך": {
+                study: [
+                    "בראשית ברא אלוהים את התלמידים המצטיינים! ✨", 
+                    "דוד ניצח את גוליית, ו{F:את תנצחי|M:אתה תנצח} את החומר הזה!", 
+                    "עוד פסוק ועוד פרק, החומר נכנס לראש מצוין."
+                ],
+                voice: [
+                    "תנך זה ספר הספרים. תנסו להבין את הסיפור מאחורי הפסוקים.", 
+                    "קחו נשימה, תקראו את המפרשים אם צריך, הכל ברור בסוף."
+                ]
+            },
+            "כימיה": {
+                study: [
+                    "יש פה כימיה טובה באוויר היום! 🧪", 
+                    "{F:תהיי|M:תהיה} ב-c ריכוז! 😎", 
+                    "אל תשכחו לאזן את המשוואות, בדיוק כמו שאתם מאזנים למידה מדהימה!"
+                ],
+                voice: [
+                    "{F:תהיי|M:תהיה} ב-סי ריכוז! אנחנו הולכים להפציץ את זה.", 
+                    "אל תילחצו מהטבלה המחזורית. הכל הגיוני ומסודר שם."
+                ]
+            },
+            "כללי": {
+                study: [
+                    "לא משנה מה החומר, אנחנו מפציצים! 🎯", 
+                    "לשבת ולתרגל זאת הדרך היחידה להצלחה. קדימה {name}! 🧠", 
+                    "זמן להתרכז במטרה: {motive}. {F:את מסוגלת|M:אתה מסוגל}!",
+                    "{F:אלופה|M:אלוף} אמיתי לא מוותר גם כשקשה. תמשיכו!"
+                ],
+                voice: [
+                    "{F:את עושה|M:אתה עושה} עבודה מדהימה. אל תתייאשו!", 
+                    "קחו אוויר... תחשבו מחוץ לקופסה, אתם יכולים לפתור את זה בקל."
+                ]
+            }
+        };
+
+        const extendedQuotesBreak = [
+            "זמן מעולה ללכת ללטף את דפנה ופיצפץ! 🐈🐾",
+            "שתו כוס מים קרים ותמתחו את הגב. מגיע לכם מנוחה ארוכה מה{subject}.",
+            "תנוחו קצת, המוח צריך להטעין מצברים לקראת החלק הבא 🔋",
+            "הפסקה של אלופים. תכף חוזרים בכל הכוח כדי להגשים את המטרה: {motive}!",
+            "אולי זה הזמן לנשנש עוגייה טובה? אין על קצת מתוק בהפסקה 🍪",
+            "תנוחו היטב, עבדתם ממש קשה בסשן האחרון. {F:אלופות|M:אלופים}!"
+        ];
+
+        const extendedSpokenBreak = [
+            "איזה כיף להיות בהפסקה! קומו קצת מהכיסא, תשתו מים קרים.",
+            "המוח שלכם עבד קשה, מגיע לו לנוח קצת עכשיו.",
+            "זה הזמן ללכת ללטף חיות מחמד, לאכול משהו טעים ולהירגע לגמרי. נתראה עוד מעט."
+        ];
+
+        function toggleUnitsVisibility() {
+            const subj = document.getElementById('examSubject').value;
+            const unitBlocks = document.querySelectorAll('.unit-block');
+            if (subj === 'מתמטיקה' || subj === 'אנגלית') {
+                unitBlocks.forEach(b => b.style.display = 'flex');
+            } else {
+                unitBlocks.forEach(b => b.style.display = 'none');
+            }
+        }
+
+        function toggleDateVisibility() {
+            const type = document.getElementById('examType').value;
+            document.getElementById('dateBlock').style.display = (type === 'למידה שוטפת') ? 'none' : 'flex';
+        }
+
+        window.onload = () => {
+            toggleUnitsVisibility();
+            toggleDateVisibility();
+        };
+
+        function removeUserRow(btn) { btn.parentElement.remove(); }
+
+        function addUserRow() {
+            const container = document.getElementById('usersContainer');
+            const row = document.createElement('div');
+            row.className = 'user-row';
+            row.innerHTML = `
+                <div class="input-block"><label>איך קוראים לך?</label><input type="text" class="u-name"></div>
+                <div class="input-block"><label>מין למשפטי מוטיבציה?</label><select class="u-gender"><option value="F">נקבה</option><option value="M">זכר</option></select></div>
+                <div class="input-block unit-block" style="${document.getElementById('examSubject').value === 'מתמטיקה' || document.getElementById('examSubject').value === 'אנגלית' ? 'flex' : 'none'}">
+                    <label>כמה יח"ל?</label>
+                    <select class="u-units"><option value="3">3 יח"ל</option><option value="4">4 יח"ל</option><option value="5">5 יח"ל</option></select>
+                </div>
+                <div class="input-block"><label>מה נותן לך מוטיבציה?</label><input type="text" class="u-motive"></div>
+                <button onclick="removeUserRow(this)" style="position:absolute; top:-10px; left:-10px; background:#ff4d4d; color:white; border:none; border-radius:50%; width:25px; height:25px; cursor:pointer; font-weight:bold;">X</button>
+            `;
+            container.appendChild(row);
+        }
+
+        function toggleManualTime() {
+            const val = document.getElementById('timeMode').value;
+            document.getElementById('manualTimeInputs').style.display = (val === 'fixed') ? 'block' : 'none';
+        }
+
+        function initApp() {
+            const rows = document.querySelectorAll('.user-row');
+            let tempUsers = [];
+            rows.forEach(row => {
+                const name = row.querySelector('.u-name').value.trim();
+                if (name) {
+                    tempUsers.push({
+                        name: name, gender: row.querySelector('.u-gender').value,
+                        units: row.querySelector('.u-units').value, motive: row.querySelector('.u-motive').value.trim()
+                    });
+                }
+            });
+
+            if (tempUsers.length === 0) { alert('חייבים לפחות לומד אחד בשביל להתחיל!'); return; }
+            
+            const examType = document.getElementById('examType').value;
+            const examDateInput = document.getElementById('examDate').value;
+
+            if (examType !== 'למידה שוטפת' && !examDateInput && !isEditingMode) { 
+                alert('בבקשה לבחור תאריך למבחן! (או לשנות ללמידה שוטפת)'); 
+                return; 
+            }
+
+            appData.users = tempUsers;
+            appData.exam.subject = document.getElementById('examSubject').value;
+            appData.exam.type = examType;
+            
+            if(examType !== 'למידה שוטפת' && examDateInput) {
+                appData.exam.date = new Date(examDateInput);
+                const today = new Date();
+                appData.exam.daysLeft = Math.ceil((appData.exam.date - today) / (1000 * 60 * 60 * 24));
+            } else {
+                appData.exam.daysLeft = 0;
+            }
+
+            appData.settings.mode = document.getElementById('timeMode').value;
+            appData.settings.fixedStudy = parseInt(document.getElementById('setupStudyTime').value);
+            appData.settings.fixedBreak = parseInt(document.getElementById('setupBreakTime').value);
+            appData.settings.voiceEnabled = document.getElementById('enableVoice').checked;
+
+            if (!isEditingMode) {
+                appData.state.startTimeStr = new Date().toLocaleTimeString('he-IL', {hour: '2-digit', minute:'2-digit'});
+            }
+
+            buildDynamicUI();
+            updateModeUI();
+
+            // מציג/מסתיר אלמנטים בהתאם למצב הגמיש
+            document.getElementById('flexibleTimeGroup').style.display = (appData.settings.mode === 'flexible') ? 'block' : 'none';
+
+            if (!isEditingMode) {
+                setSessionTimes(false); 
+            } else {
+                setSessionTimes(true); 
+                if(appData.state.timerId !== null) {
+                   document.getElementById('motivationText').innerText = generateQuote(appData.state.currentMode === 'study' ? 'study_text' : 'break_text');
+                }
+            }
+            
+            document.getElementById('setupScreen').style.display = 'none';
+            document.getElementById('mainApp').style.display = 'flex';
+            
+            if (appData.settings.voiceEnabled && !appData.settings.globalMute && !isEditingMode) {
+                let dummy = new SpeechSynthesisUtterance("");
+                window.speechSynthesis.speak(dummy);
+            }
+            isEditingMode = false;
+        }
+
+        function editSettings() {
+            isEditingMode = true;
+            document.getElementById('mainApp').style.display = 'none';
+            document.getElementById('setupScreen').style.display = 'block';
+            document.getElementById('startMainBtn').innerText = 'שמור שינויים והמשך ללמוד ✏️';
+        }
+
+        function resetAllStats() {
+            if(!confirm("אתם בטוחים שאתם רוצים למחוק את כל נתוני הלמידה שלכם?")) return;
+            pauseTimer();
+            appData.state.totalStudy = 0;
+            appData.state.totalBreak = 0;
+            appData.state.sessionCount = 0;
+            appData.state.startTimeStr = new Date().toLocaleTimeString('he-IL', {hour: '2-digit', minute:'2-digit'});
+            document.querySelector('#historyTable tbody').innerHTML = '';
+            updateGlobalClocks();
+            appData.state.currentMode = 'study';
+            updateModeUI();
+            setSessionTimes(false);
+        }
+
+        function buildDynamicUI() {
+            const tr = document.createElement('tr');
+            tr.innerHTML = '<th>סשן</th>';
+            appData.users.forEach(u => tr.innerHTML += `<th>${u.name}<br><span style="font-size:0.8em; font-weight:normal;">(חומר / הרגשה)</span></th>`);
+            document.getElementById('historyHead').innerHTML = '';
+            document.getElementById('historyHead').appendChild(tr);
+
+            const surveyCont = document.getElementById('surveyFormsContainer');
+            surveyCont.innerHTML = '';
+            appData.users.forEach((u, i) => {
+                surveyCont.innerHTML += `
+                    <div style="background:#f3f4f6; padding:15px; border-radius:10px; margin-bottom:10px; text-align: right; border-right: 4px solid #d500f9;">
+                        <strong style="color:#4a148c; font-size:1.2em;">${u.name}</strong>
+                        <div class="survey-grid">
+                            <div class="input-block">
+                                <label>איך הולך עם החומר?</label>
+                                <select id="prog_${i}">
+                                    <option value="💡 מעולה">💡 הבנתי מעולה</option>
+                                    <option value="👍 סבבה">👍 התקדמתי סבבה</option>
+                                    <option value="🤔 לתרגל">🤔 צריך תרגול</option>
+                                    <option value="🤯 קשה">🤯 לא הבנתי כלום</option>
+                                </select>
+                            </div>
+                            <div class="input-block">
+                                <label>איך ההרגשה עכשיו?</label>
+                                <select id="mood_${i}">
+                                    <option value="😎 באנרגיות">😎 באנרגיות שיא</option>
+                                    <option value="🙂 הכל טוב">🙂 הכל טוב</option>
+                                    <option value="🥱 עייפות">🥱 קצת עייפות</option>
+                                    <option value="😫 שביזות">😫 שבוז/ה לגמרי</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        // פונקציה לבחירת זמנים, מקבלת גם זמן ידני כשעוברים סשן
+        function setSessionTimes(keepRunning = false, manualMinutes = null) {
+            if (keepRunning && appData.state.timerId !== null && appData.settings.mode !== 'flexible') {
+                return; 
+            }
+            
+            let mins = 25;
+            if (manualMinutes !== null) {
+                // העדפה לזמן שסופק עכשיו מהפופאפ הגמיש
+                mins = manualMinutes;
+                if(appData.settings.mode === 'flexible') document.getElementById('flexMinutes').value = mins;
+            } else if (appData.settings.mode === 'smart') {
+                if (appData.exam.type === 'למידה שוטפת') {
+                    mins = (appData.state.currentMode === 'study') ? 25 : 5; 
+                } else {
+                    if (appData.state.currentMode === 'study') {
+                        mins = (appData.exam.daysLeft <= 3) ? 50 : (appData.exam.daysLeft <= 7) ? 40 : 25;
+                    } else {
+                        mins = (appData.exam.daysLeft <= 3) ? 10 : (appData.exam.daysLeft <= 7) ? 10 : 5;
+                    }
+                }
+            } else if (appData.settings.mode === 'fixed') {
+                mins = (appData.state.currentMode === 'study') ? appData.settings.fixedStudy : appData.settings.fixedBreak;
+            } else if (appData.settings.mode === 'flexible') {
+                mins = parseInt(document.getElementById('flexMinutes').value) || 25;
+            }
+
+            appData.state.initialTime = mins * 60;
+            if(!keepRunning || appData.state.timerId === null) {
+                appData.state.timeLeft = appData.state.initialTime;
+                updateDisplay();
+            }
+        }
+
+        function updateTimerFromInput() {
+            if (appData.state.timerId !== null) return;
+            appData.state.initialTime = parseInt(document.getElementById('flexMinutes').value) * 60;
+            appData.state.timeLeft = appData.state.initialTime;
+            updateDisplay();
+        }
+
+        function formatQuote(template, user) {
+            let examText = appData.exam.type === 'למידה שוטפת' ? '' : `לקראת ה${appData.exam.type}`;
+            let formattedStr = template.replace(/\{F:(.*?)\|M:(.*?)\}/g, function(match, p1, p2) {
+                return user.gender === 'F' ? p1 : p2;
+            });
+
+            return formattedStr
+                .replace(/{name}/g, user.name)
+                .replace(/{units}/g, user.units)
+                .replace(/{motive}/g, user.motive || 'המטרה')
+                .replace(/{exam}/g, examText)
+                .replace(/{subject}/g, appData.exam.subject);
+        }
+
+        function generateQuote(type) {
+            const user = appData.users[Math.floor(Math.random() * appData.users.length)];
+            let arrayToUse = [];
+
+            if (type === 'study_text') arrayToUse = quotesDB[appData.exam.subject]?.study || quotesDB['כללי'].study;
+            else if (type === 'break_text') arrayToUse = extendedQuotesBreak;
+            else if (type === 'study_voice') arrayToUse = quotesDB[appData.exam.subject]?.voice || quotesDB['כללי'].voice;
+            else if (type === 'break_voice') arrayToUse = extendedSpokenBreak;
+
+            if (arrayToUse.length > 0) {
+                const randomTemplate = arrayToUse[Math.floor(Math.random() * arrayToUse.length)];
+                return formatQuote(randomTemplate, user);
+            }
+            return "כל הכבוד, תמשיכו ככה!";
+        }
+
+        // טיפול במוזיקה דרך JS כדי לפתור את הבעיות (כמו ב-BeatStory)
+        function playMusic(url, btnElement) {
+            document.querySelectorAll('.music-btn').forEach(b => b.classList.remove('playing'));
+            
+            if (activeAudio) {
+                activeAudio.pause();
+                activeAudio.currentTime = 0;
+            }
+
+            if (url === 'stop') return;
+            
+            btnElement.classList.add('playing');
+            activeAudio = new Audio(url);
+            activeAudio.loop = true;
+            activeAudio.volume = 0.3;
+
+            if (!appData.settings.globalMute) {
+                activeAudio.play().catch(err => {
+                    console.log("Audio block", err);
+                    alert("הדפדפן דורש אינטראקציה כדי לנגן. פשוט לחצו שוב על הכפתור 🎵");
+                });
+            }
+        }
+
+        function toggleGlobalMute() {
+            const btn = document.getElementById('muteBtn');
+            appData.settings.globalMute = !appData.settings.globalMute;
+            
+            if (appData.settings.globalMute) {
+                btn.innerText = "🔇 מערכת מושתקת"; btn.classList.add('muted');
+                if(activeAudio) activeAudio.pause();
+                window.speechSynthesis.cancel();
+            } else {
+                btn.innerText = "🔊 השתק הכל (מוזיקה ודיבור)"; btn.classList.remove('muted');
+                if(activeAudio) activeAudio.play();
+            }
+        }
+
+        function speakText(text) {
+            if (appData.settings.globalMute || !appData.settings.voiceEnabled) return;
+            if ('speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'he-IL'; utterance.pitch = 1.3; utterance.rate = 1.05;
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        function updateDisplay() {
+            const m = Math.floor(appData.state.timeLeft / 60);
+            const s = appData.state.timeLeft % 60;
+            document.getElementById('display').textContent = `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+        }
+
+        function formatTimeSpan(sec) {
+            const h = Math.floor(sec/3600), m = Math.floor((sec%3600)/60), s = sec%60;
+            return h>0 ? `${h}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}` : `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+        }
+
+        function updateGlobalClocks() {
+            document.getElementById('totalStudyDisplay').innerText = formatTimeSpan(appData.state.totalStudy);
+            document.getElementById('totalBreakDisplay').innerText = formatTimeSpan(appData.state.totalBreak);
+        }
+
+        function startTimer() {
+            if (appData.state.timeLeft <= 0) setSessionTimes();
+            if (appData.state.timerId !== null) return;
+
+            document.getElementById('startBtn').innerText = 'ממשיכים...';
+            document.getElementById('motivationText').innerText = generateQuote(appData.state.currentMode === 'study' ? 'study_text' : 'break_text');
+
+            appData.state.quoteId = setInterval(() => {
+                document.getElementById('motivationText').innerText = generateQuote(appData.state.currentMode === 'study' ? 'study_text' : 'break_text');
+            }, 90000);
+
+            appData.state.timerId = setInterval(() => {
+                if (appData.state.currentMode === 'study') appData.state.totalStudy++;
+                else appData.state.totalBreak++;
+                
+                updateGlobalClocks();
+                appData.state.timeLeft--;
+                updateDisplay();
+
+                const timePassed = appData.state.initialTime - appData.state.timeLeft;
+
+                if (appData.state.timeLeft > 0 && timePassed > 0 && timePassed % 180 === 0) {
+                    speakText(generateQuote(appData.state.currentMode === 'study' ? 'study_voice' : 'break_voice'));
+                }
+
+                if (appData.state.timeLeft <= 0) {
+                    clearInterval(appData.state.timerId);
+                    clearInterval(appData.state.quoteId);
+                    appData.state.timerId = null;
+                    document.getElementById('startBtn').innerText = 'התחלה ▶';
+                    confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 }});
+
+                    if (appData.state.currentMode === 'study') {
+                        speakText("עבודה מדהימה! הסתיים פרק הלמידה. תמלאו איך היה ונצא להפסקה.");
+                        
+                        // תצוגה מותנית למצב גמיש בתוך מודל הסקר
+                        if(appData.settings.mode === 'flexible') {
+                            document.getElementById('flexBreakTimeGroup').style.display = 'block';
+                        } else {
+                            document.getElementById('flexBreakTimeGroup').style.display = 'none';
+                        }
+                        
+                        setTimeout(() => document.getElementById('surveyModal').style.display = 'flex', 1500);
+                    } else {
+                        // סיום הפסקה!
+                        if (appData.settings.mode === 'flexible') {
+                            speakText(`ההפסקה נגמרה. כמה זמן תרצו ללמוד עכשיו?`);
+                            document.getElementById('flexStudyModal').style.display = 'flex';
+                        } else {
+                            speakText(`ההפסקה נגמרה. חוזרים ללמוד ${appData.exam.subject}!`);
+                            appData.state.currentMode = 'study';
+                            updateModeUI();
+                            setSessionTimes(false);
+                        }
+                    }
+                }
+            }, 1000);
+        }
+
+        function pauseTimer() {
+            clearInterval(appData.state.timerId);
+            clearInterval(appData.state.quoteId);
+            appData.state.timerId = null;
+            document.getElementById('startBtn').innerText = 'המשך ▶';
+        }
+
+        function resetTimer() {
+            pauseTimer();
+            appData.state.timeLeft = appData.state.initialTime;
+            updateDisplay();
+            document.getElementById('startBtn').innerText = 'התחלה ▶';
+        }
+
+        function forceBreak() {
+            pauseTimer();
+            appData.state.currentMode = 'break';
+            updateModeUI();
+            setSessionTimes(false);
+            speakText("הפסקה יזומה הופעלה. קחו נשימה ותנוחו.");
+        }
+
+        function updateModeUI() {
+            const ind = document.getElementById('modeIndicator');
+            if (appData.state.currentMode === 'study') {
+                document.body.classList.remove('break-mode');
+                ind.innerText = `📚 זמן למידה (${appData.exam.subject})`; ind.style.color = '#ff4081';
+            } else {
+                document.body.classList.add('break-mode');
+                ind.innerText = '☕ זמן הפסקה'; ind.style.color = '#4a148c';
+            }
+        }
+
+        function saveSurvey() {
+            appData.state.sessionCount++;
+            const tbody = document.querySelector('#historyTable tbody');
+            const tr = document.createElement('tr');
+            tr.innerHTML = `<td>#${appData.state.sessionCount}</td>`;
+            
+            appData.users.forEach((u, i) => {
+                const prog = document.getElementById(`prog_${i}`).value.split(' ')[0];
+                const mood = document.getElementById(`mood_${i}`).value.split(' ')[0];
+                tr.innerHTML += `<td>${prog} / ${mood}</td>`;
+            });
+            
+            tbody.appendChild(tr);
+            tr.style.backgroundColor = "rgba(74, 222, 128, 0.3)";
+            setTimeout(() => tr.style.backgroundColor = "", 1500);
+
+            document.getElementById('surveyModal').style.display = 'none';
+
+            let nextBreakTime = null;
+            if (appData.settings.mode === 'flexible') {
+                nextBreakTime = parseInt(document.getElementById('flexBreakInput').value) || 10;
+            }
+
+            appData.state.currentMode = 'break';
+            updateModeUI();
+            setSessionTimes(false, nextBreakTime);
+            speakText("שמרתי את ההתקדמות בטבלה. תהנו מההפסקה שלכם!");
+        }
+
+        function startNextFlexStudy() {
+            const studyMins = parseInt(document.getElementById('flexStudyInput').value) || 25;
+            document.getElementById('flexStudyModal').style.display = 'none';
+
+            appData.state.currentMode = 'study';
+            updateModeUI();
+            setSessionTimes(false, studyMins);
+            speakText(`חוזרים ללמוד ${appData.exam.subject}! בהצלחה.`);
+        }
+
+        function finishStudying() {
+            pauseTimer();
+            if(activeAudio) activeAudio.pause();
+            
+            document.getElementById('mainApp').style.display = 'none';
+            document.getElementById('summaryScreen').style.display = 'block';
+            
+            let examStr = appData.exam.type === 'למידה שוטפת' ? '(למידה שוטפת)' : `לקראת ה${appData.exam.type}`;
+            document.getElementById('sumExamType').innerText = examStr;
+            document.getElementById('sumSubject').innerText = appData.exam.subject;
+            document.getElementById('sumStudyTime').innerText = formatTimeSpan(appData.state.totalStudy);
+            document.getElementById('sumBreakTime').innerText = formatTimeSpan(appData.state.totalBreak);
+            document.getElementById('sumSessions').innerText = appData.state.sessionCount;
+            
+            const endTimeStr = new Date().toLocaleTimeString('he-IL', {hour: '2-digit', minute:'2-digit'});
+            document.getElementById('sumStartTime').innerText = appData.state.startTimeStr;
+            document.getElementById('sumEndTime').innerText = endTimeStr;
+
+            let totalMins = Math.floor(appData.state.totalStudy / 60);
+            let namesStr = appData.users.map(u => u.name).join(' ו-');
+            let adviceHTML = "";
+
+            if (totalMins < 30) {
+                adviceHTML = `<strong>סשן קצר וקולע, ${namesStr}! ⚡</strong><br>
+                עשיתם ${totalMins} דקות של למידה נטו. זה מצוין כהתחלה. ההמלצה שלי היא לקחת הפסקה של חצי שעה, ולחזור לעוד סשן בהמשך היום.`;
+            } else if (totalMins < 90) {
+                adviceHTML = `<strong>עבודה מעולה, ${namesStr}! 🌟</strong><br>
+                חרשתם ${totalMins} דקות נטו! זו כמות זמן אידיאלית להפנים את החומר ב${appData.exam.subject}. קחו מנוחה ארוכה עכשיו.`;
+            } else {
+                adviceHTML = `<strong>וואו, חרישה מטורפת של אלופים! 🏆</strong><br>
+                ${totalMins} דקות נטו של למידה! נתתם פה עבודה של 100%. לכו לעשות משהו כיף, תראו סדרה, תלטפו את החיות מחמד - מגיע לכם!`;
+            }
+            
+            document.getElementById('sumAdvice').innerHTML = adviceHTML;
+            speakText("כל הכבוד! סיימתם ללמוד להיום. מגיע לכם לנוח.");
+            
+            const end = Date.now() + 4000;
+            (function frame() {
+                confetti({ particleCount: 5, angle: 60, spread: 55, origin: { x: 0 }, colors: ['#ff9a9e', '#a1c4fd', '#fbc2eb', '#4facfe'] });
+                confetti({ particleCount: 5, angle: 120, spread: 55, origin: { x: 1 }, colors: ['#ff9a9e', '#a1c4fd', '#fbc2eb', '#4facfe'] });
+                if (Date.now() < end) requestAnimationFrame(frame);
+            }());
+        }
+    </script>
+</body>
+</html>
